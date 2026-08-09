@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+  <style>
+    .register-container {
+        max-width: 500px;
+        margin: 0 auto;
+        background-color: #f8f9fa;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h2 {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .btn-primary {
+        width: 100%;
+    }
+  </style>
+
+  <div class="register-container mt-5">
+    <h2>Register</h2>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit" class="btn btn-primary">Register</button>
+    </form>
+  </div>
+{% endblock %}

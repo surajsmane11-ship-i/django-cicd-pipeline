@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block content %}
+  <style>
+    .home-banner {
+        background: linear-gradient(to right, #6a11cb, #2575fc);
+        color: white;
+        padding: 60px 40px;
+        text-align: center;
+        border-radius: 20px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .home-banner h2 {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 15px;
+    }
+
+    .home-banner p {
+        font-size: 1.2rem;
+        margin-bottom: 25px;
+    }
+
+    .btn-shop {
+        font-size: 1rem;
+        padding: 10px 20px;
+        border-radius: 30px;
+    }
+  </style>
+
+  <div class="home-banner mt-5">
+    <h2>Welcome to the E-commerce Store</h2>
+    <p>Discover exclusive products and great deals!</p>
+    
+  </div>
+{% endblock %}

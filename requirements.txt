@@ -1,0 +1,14 @@
+asgiref==3.12.1
+blinker==1.9.0
+click==8.4.2
+colorama==0.4.6
+Django==6.1
+Flask==3.1.2
+itsdangerous==2.2.0
+Jinja2==3.1.6
+MarkupSafe==3.0.3
+prometheus_client==0.26.0
+prometheus_flask_exporter==0.23.2
+sqlparse==0.5.5
+tzdata==2026.3
+Werkzeug==3.1.8

@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block content %}
+  <style>
+    .login-container {
+        max-width: 450px;
+        margin: 60px auto;
+        padding: 30px;
+        background-color: #ffffff;
+        border-radius: 15px;
+        box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+        text-align: center;
+        margin-bottom: 25px;
+        color: #333;
+    }
+
+    .btn-primary {
+        width: 100%;
+    }
+
+    .form-control:focus {
+        box-shadow: 0 0 5px rgba(0,123,255,0.5);
+        border-color: #007bff;
+    }
+  </style>
+
+  <div class="login-container">
+    <h2>Login</h2>
+    <form method="post">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label class="form-label">Username:</label>
+        <input type="text" name="username" class="form-control" placeholder="Enter your username" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Password:</label>
+        <input type="password" name="password" class="form-control" placeholder="Enter your password" required>
+      </div>
+      <button type="submit" class="btn btn-primary">Login</button>
+    </form>
+  </div>
+{% endblock %}
