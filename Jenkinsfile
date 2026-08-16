@@ -47,7 +47,9 @@ pipeline {
                         echo "Connecting to Production Server"
                         echo "======================================"
 
-                        ssh -o StrictHostKeyChecking=no ${PROD_USER}@${PROD_HOST} 'bash -s' << REMOTE_SCRIPT
+                        ssh -o StrictHostKeyChecking=no \
+                            ${PROD_USER}@${PROD_HOST} \
+                            "PROD_DIR='${PROD_DIR}' bash -s" << 'REMOTE_SCRIPT'
 
 set -e
 
@@ -55,7 +57,7 @@ echo "======================================"
 echo "Connected to Production Server"
 echo "======================================"
 
-cd ${PROD_DIR}
+cd "$PROD_DIR"
 
 echo "======================================"
 echo "CURRENT COMMIT"
@@ -115,28 +117,36 @@ echo "======================================"
 
 if [ -f django.pid ]; then
 
-    PID=\$(cat django.pid)
+    PID=$(cat django.pid)
 
-    if kill -0 \$PID 2>/dev/null; then
-        echo "Stopping Django process: \$PID"
-        kill \$PID
+    if kill -0 "$PID" 2>/dev/null; then
+        echo "Stopping Django process: $PID"
+        kill "$PID"
+
         sleep 2
+
+        if kill -0 "$PID" 2>/dev/null; then
+            echo "Process still running. Force stopping..."
+            kill -9 "$PID" || true
+        fi
     fi
 
     rm -f django.pid
+
 fi
 
 echo "======================================"
 echo "STARTING DJANGO SERVER"
 echo "======================================"
 
-nohup python3 manage.py runserver 0.0.0.0:8000 > django.log 2>&1 &
+nohup python3 manage.py runserver 0.0.0.0:8000 \
+    > django.log 2>&1 &
 
-DJANGO_PID=\$!
+DJANGO_PID=$!
 
-echo \$DJANGO_PID > django.pid
+echo "$DJANGO_PID" > django.pid
 
-echo "Django PID: \$DJANGO_PID"
+echo "Django PID: $DJANGO_PID"
 
 sleep 5
 
@@ -144,7 +154,7 @@ echo "======================================"
 echo "VERIFYING DJANGO SERVER"
 echo "======================================"
 
-if kill -0 \$DJANGO_PID 2>/dev/null; then
+if kill -0 "$DJANGO_PID" 2>/dev/null; then
 
     echo "Django server is running"
 
@@ -157,6 +167,8 @@ else
     echo "======================================"
 
     cat django.log
+
+    rm -f django.pid
 
     exit 1
 
