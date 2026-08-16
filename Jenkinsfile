@@ -47,95 +47,126 @@ pipeline {
                         echo "Connecting to Production Server"
                         echo "======================================"
 
-                        ssh -o StrictHostKeyChecking=no ${PROD_USER}@${PROD_HOST} "bash -s" << 'REMOTE_SCRIPT'
+                        ssh -o StrictHostKeyChecking=no ${PROD_USER}@${PROD_HOST} 'bash -s' << REMOTE_SCRIPT
 
-                        set -e
+set -e
 
-                        echo "======================================"
-                        echo "Connected to Production Server"
-                        echo "======================================"
+echo "======================================"
+echo "Connected to Production Server"
+echo "======================================"
 
-                        cd /home/ubuntu/django-cicd-project
+cd ${PROD_DIR}
 
-                        echo "======================================"
-                        echo "CURRENT COMMIT"
-                        echo "======================================"
+echo "======================================"
+echo "CURRENT COMMIT"
+echo "======================================"
 
-                        git log --oneline -1
+git log --oneline -1 || true
 
-                        echo "======================================"
-                        echo "FETCHING LATEST CODE"
-                        echo "======================================"
+echo "======================================"
+echo "FETCHING LATEST CODE"
+echo "======================================"
 
-                        git fetch origin
+git fetch origin
 
-                        echo "======================================"
-                        echo "UPDATING PRODUCTION CODE"
-                        echo "======================================"
+echo "======================================"
+echo "UPDATING PRODUCTION CODE"
+echo "======================================"
 
-                        git reset --hard origin/main
+git reset --hard origin/main
 
-                        echo "======================================"
-                        echo "UPDATED COMMIT"
-                        echo "======================================"
+echo "======================================"
+echo "UPDATED COMMIT"
+echo "======================================"
 
-                        git log --oneline -1
+git log --oneline -1
 
-                        echo "======================================"
-                        echo "CREATING VIRTUAL ENVIRONMENT"
-                        echo "======================================"
+echo "======================================"
+echo "CREATING VIRTUAL ENVIRONMENT"
+echo "======================================"
 
-                        if [ ! -d "venv" ]; then
-                            python3 -m venv venv
-                        fi
+if [ ! -d "venv" ]; then
+    python3 -m venv venv
+fi
 
-                        source venv/bin/activate
+source venv/bin/activate
 
-                        echo "======================================"
-                        echo "INSTALLING REQUIREMENTS"
-                        echo "======================================"
+echo "======================================"
+echo "INSTALLING REQUIREMENTS"
+echo "======================================"
 
-                        pip install -r requirements.txt
+pip install -r requirements.txt
 
-                        echo "======================================"
-                        echo "RUNNING MIGRATIONS"
-                        echo "======================================"
+echo "======================================"
+echo "RUNNING MIGRATIONS"
+echo "======================================"
 
-                        python3 manage.py migrate
+python3 manage.py migrate
 
-                        echo "======================================"
-                        echo "COLLECTING STATIC FILES"
-                        echo "======================================"
+echo "======================================"
+echo "COLLECTING STATIC FILES"
+echo "======================================"
 
-                        python3 manage.py collectstatic --noinput || true
+python3 manage.py collectstatic --noinput
 
-                        echo "======================================"
-                        echo "STOPPING OLD DJANGO SERVER"
-                        echo "======================================"
+echo "======================================"
+echo "STOPPING OLD DJANGO SERVER"
+echo "======================================"
 
-                        pkill -f "manage.py runserver" || true
+if [ -f django.pid ]; then
 
-                        sleep 2
+    PID=\$(cat django.pid)
 
-                        echo "======================================"
-                        echo "STARTING DJANGO SERVER"
-                        echo "======================================"
+    if kill -0 \$PID 2>/dev/null; then
+        echo "Stopping Django process: \$PID"
+        kill \$PID
+        sleep 2
+    fi
 
-                        nohup python3 manage.py runserver 0.0.0.0:8000 > django.log 2>&1 &
+    rm -f django.pid
+fi
 
-                        sleep 5
+echo "======================================"
+echo "STARTING DJANGO SERVER"
+echo "======================================"
 
-                        echo "======================================"
-                        echo "VERIFYING DJANGO SERVER"
-                        echo "======================================"
+nohup python3 manage.py runserver 0.0.0.0:8000 > django.log 2>&1 &
 
-                        pgrep -f "manage.py runserver"
+DJANGO_PID=\$!
 
-                        echo "======================================"
-                        echo "DEPLOYMENT SUCCESSFUL"
-                        echo "======================================"
+echo \$DJANGO_PID > django.pid
 
-                        REMOTE_SCRIPT
+echo "Django PID: \$DJANGO_PID"
+
+sleep 5
+
+echo "======================================"
+echo "VERIFYING DJANGO SERVER"
+echo "======================================"
+
+if kill -0 \$DJANGO_PID 2>/dev/null; then
+
+    echo "Django server is running"
+
+else
+
+    echo "Django server failed to start"
+
+    echo "======================================"
+    echo "DJANGO LOG"
+    echo "======================================"
+
+    cat django.log
+
+    exit 1
+
+fi
+
+echo "======================================"
+echo "DEPLOYMENT SUCCESSFUL"
+echo "======================================"
+
+REMOTE_SCRIPT
                     '''
                 }
             }
