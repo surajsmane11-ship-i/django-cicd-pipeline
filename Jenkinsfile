@@ -18,11 +18,13 @@ pipeline {
         stage('Setup Python Environment') {
             steps {
                 sh '''
+                    set -e
+
                     python3 -m venv venv
                     . venv/bin/activate
 
-                    pip install --upgrade pip
-                    pip install -r requirements.txt
+                    python -m pip install --upgrade pip
+                    python -m pip install -r requirements.txt
                 '''
             }
         }
@@ -30,9 +32,11 @@ pipeline {
         stage('Run Django Tests') {
             steps {
                 sh '''
+                    set -e
+
                     . venv/bin/activate
 
-                    python3 manage.py test
+                    python manage.py test
                 '''
             }
         }
@@ -43,15 +47,18 @@ pipeline {
                 sshagent(credentials: ['ec2-ssh']) {
 
                     sh '''
+                        set -e
+
                         echo "======================================"
                         echo "Connecting to Production Server"
                         echo "======================================"
 
                         ssh -o StrictHostKeyChecking=no \
-                            ${PROD_USER}@${PROD_HOST} \
-                            "PROD_DIR='${PROD_DIR}' bash -s" << 'REMOTE_SCRIPT'
+                            ${PROD_USER}@${PROD_HOST} 'bash -s' <<'REMOTE_SCRIPT'
 
 set -e
+
+PROD_DIR="/home/ubuntu/django-cicd-project"
 
 echo "======================================"
 echo "Connected to Production Server"
@@ -97,19 +104,20 @@ echo "======================================"
 echo "INSTALLING REQUIREMENTS"
 echo "======================================"
 
-pip install -r requirements.txt
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 
 echo "======================================"
 echo "RUNNING MIGRATIONS"
 echo "======================================"
 
-python3 manage.py migrate
+python manage.py migrate
 
 echo "======================================"
 echo "COLLECTING STATIC FILES"
 echo "======================================"
 
-python3 manage.py collectstatic --noinput
+python manage.py collectstatic --noinput
 
 echo "======================================"
 echo "STOPPING OLD DJANGO SERVER"
@@ -121,25 +129,25 @@ if [ -f django.pid ]; then
 
     if kill -0 "$PID" 2>/dev/null; then
         echo "Stopping Django process: $PID"
-        kill "$PID"
 
-        sleep 2
+        kill "$PID" || true
+
+        sleep 3
 
         if kill -0 "$PID" 2>/dev/null; then
-            echo "Process still running. Force stopping..."
+            echo "Force stopping Django process: $PID"
             kill -9 "$PID" || true
         fi
     fi
 
     rm -f django.pid
-
 fi
 
 echo "======================================"
 echo "STARTING DJANGO SERVER"
 echo "======================================"
 
-nohup python3 manage.py runserver 0.0.0.0:8000 \
+nohup python manage.py runserver 0.0.0.0:8000 \
     > django.log 2>&1 &
 
 DJANGO_PID=$!
@@ -160,7 +168,7 @@ if kill -0 "$DJANGO_PID" 2>/dev/null; then
 
 else
 
-    echo "Django server failed to start"
+    echo "Django server FAILED to start"
 
     echo "======================================"
     echo "DJANGO LOG"
@@ -171,13 +179,13 @@ else
     rm -f django.pid
 
     exit 1
-
 fi
 
 echo "======================================"
 echo "DEPLOYMENT SUCCESSFUL"
 echo "======================================"
 
+exit 0
 REMOTE_SCRIPT
                     '''
                 }
