@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     environment {
-        PROD_HOST = "13.126.111.217"
+        PROD_HOST = " 13.126.111.217 "
         PROD_USER = "ubuntu"
-        PROD_DIR  = "/home/ubuntu/django-cicd-projects"
+        PROD_DIR  = "/home/ubuntu/django-cicd-project_new"
     }
 
     stages {
